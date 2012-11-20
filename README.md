@@ -12,8 +12,8 @@ _phlegmaticprogrammer.btree_ namespace.
 These are the functions of the _BTreePool_ protocol:
 - (btree-empty [this])  
   Creates an empty btree.
-- (btree-insert [this btree x])  
-  Inserts content x into btree.
+- (btree-insert [this btree content])  
+  Inserts content into btree.
 - (btree-delete [this btree key])    
   Deletes the content with given key from the btree.
 - (btree-find [this btree key])  
@@ -28,7 +28,6 @@ The signature of _btree-pool_ is:
        param-t        minimum degree of B-tree, >= 2
        param-cmp      comparator (returning < 0, = 0 or > 0), must be able to compare:
                         content with content
-                        key with key
                         content with key and vice versa
        store-node     convert M-Node into an address
        load-node      convert address into an M-Node"
