@@ -2,7 +2,7 @@
 
 ;; Purely functional btree, based on the algorithms described in:
 ;;    Cormen - Introduction to Algorithms
-;;    Chapter 19: B-Trees
+;;    Chapter 18: B-Trees
 
 (defrecord M-Node [leaf content]) ; node in memory
 
