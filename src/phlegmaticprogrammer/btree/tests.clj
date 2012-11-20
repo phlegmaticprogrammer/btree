@@ -31,7 +31,6 @@
         w (sort-by :key v)]
     (= (seq v) (seq w))))
     
-
 (defn ins-test-step [m N btree]
   (let [n (rand-int N)
         c (test-content n)
