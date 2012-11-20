@@ -6,7 +6,8 @@ To use it, build with Leiningen and include the following dependency in your Clo
 
     [phlegmaticprogrammer/btree "0.1.0"]
 
-It provides a protocol _BTreePool_ and a function _btree-pool_ to create instances of that protocol. Both live in the
+It provides a protocol _BTreePool_, a function _btree-pool_ to create instances of that protocol, and a record type 
+_M-Node_ for representing B-tree nodes in memory. All live in the
 _phlegmaticprogrammer.btree_ namespace.
 
 These are the functions of the _BTreePool_ protocol:
@@ -32,6 +33,17 @@ The signature of _btree-pool_ is:
        store-node     convert M-Node into an address
        load-node      convert address into an M-Node"
       [{param-t :param-t param-cmp :param-cmp load-node :load-node store-node :store-node}])
+
+The type of in-memory nodes is defined via
+
+    (defrecord M-Node [leaf content]) 
+
+where its components have the following meaning:
+- _leaf_  
+  either true or false
+- _content_  
+  if this is a leaf, then this is a vector of contents  
+  if it is not a leaf, then this is a vector of addresses separated by contents
 
 ---
 
