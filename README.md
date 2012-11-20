@@ -4,7 +4,7 @@ Purely functional B-tree implementation in Clojure.
 
 To use it, build with Leiningen and include the following dependency in your Clojure project:  
 
-    [phlegmaticprogrammer/btree "1.0.0"]
+    [phlegmaticprogrammer/btree "0.1.0"]
 
 It provides a protocol _BTreePool_ and a function _btree-pool_ to create instances of that protocol. Both live in the
 _phlegmaticprogrammer.btree_ namespace.
