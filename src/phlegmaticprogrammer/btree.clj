@@ -11,7 +11,7 @@
 ;;       either true or false
 ;;   :content
 ;;       if this is a leaf, then this is a vector of Content objects
-;;       if it is not a leaf, then this is a vector of S-Node objects separated by Content objects  
+;;       if it is not a leaf, then this is a vector of addresses separated by Content objects  
 
 (defn- vec-concat [& items] (vec (apply concat items)))
 
