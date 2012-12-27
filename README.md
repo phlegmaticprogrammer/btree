@@ -4,7 +4,7 @@ Purely functional B-tree implementation in Clojure.
 
 To use it, build with Leiningen and include the following dependency in your Clojure project:  
 
-    [phlegmaticprogrammer/btree "0.1.0"]
+    [phlegmaticprogrammer/btree "0.2.0"]
 
 It provides a protocol _BTreePool_, a function _btree-pool_ to create instances of that protocol, and a record type 
 _M-Node_ for representing B-tree nodes in memory. All live in the
@@ -21,11 +21,11 @@ These are the main functions of the _BTreePool_ protocol:
   Looks up the content for the given key in the btree. Returns nil if no such content exists. 
 - (btree-flatfold [this btree f-content f-address v])
   Folds f-content over the content of btree without recursing into subtrees but using f-address instead.
-- (btree-fold [this btree f v])
+- (btree-fold [this btree f v]) 
   INEFFICIENT!! Folds f over the content of btree. Does recurse into subtrees.
 - (btree-dir [this btree])   
   INEFFICIENT!! Returns a vector consisting of all contents in btree. 
-- (btree-count [this btree])
+- (btree-count [this btree]) 
   INEFFICIENT!! Returns the number of all contents in btree. 
   Equivalent to (count (btree-dir this btree)).
 
@@ -36,11 +36,11 @@ They assume that a function _address-count_ is passed to them which could be def
 
 Instead of the above definition though, _address-count_ should be implemented by extracting the count from the address directly.
 The functions working with indices are:
-- (btree-indexed-find [this btree address-count key])
+- (btree-indexed-find [this btree address-count key]) 
   Looks up the content for the given key in btree. 
   Returns {:index index :content content} if content was found successfully at index.
   Returns {:index index} if no such content exists but would be inserted at index.
-- (btree-range-retrieve [this btree address-count range-start range-end])
+- (btree-range-retrieve [this btree address-count range-start range-end]) 
   Returns a vector of the contents between index _range-start_ (inclusive) and index _range-end_ (exclusive).
   
 The signature of _btree-pool_ is:
