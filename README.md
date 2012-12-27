@@ -37,8 +37,8 @@ They assume that a function _address-count_ is passed to them which could be def
 Instead of the above definition though, _address-count_ should be implemented by extracting the count from the address directly.
 The functions working with indices are:
 - (btree-indexed-find [this btree address-count key])    
-  Looks up the content for the given key in btree. 
-  Returns {:index index :content content} if content was found successfully at index.
+  Looks up the content for the given key in btree.   
+  Returns {:index index :content content} if content was found successfully at index.   
   Returns {:index index} if no such content exists but would be inserted at index.
 - (btree-range-retrieve [this btree address-count range-start range-end])    
   Returns a vector of the contents between index _range-start_ (inclusive) and index _range-end_ (exclusive).
