@@ -10,7 +10,7 @@ It provides a protocol _BTreePool_, a function _btree-pool_ to create instances 
 _M-Node_ for representing B-tree nodes in memory. All live in the
 _phlegmaticprogrammer.btree_ namespace.
 
-These are the functions of the _BTreePool_ protocol:
+These are the main functions of the _BTreePool_ protocol:
 - (btree-empty [this])  
   Creates an empty btree.
 - (btree-insert [this btree content])  
@@ -19,9 +19,30 @@ These are the functions of the _BTreePool_ protocol:
   Deletes the content with given key from the btree.
 - (btree-find [this btree key])  
   Looks up the content for the given key in the btree. Returns nil if no such content exists. 
+- (btree-flatfold [this btree f-content f-address v])
+  Folds f-content over the content of btree without recursing into subtrees but using f-address instead.
+- (btree-fold [this btree f v])
+  INEFFICIENT!! Folds f over the content of btree. Does recurse into subtrees.
 - (btree-dir [this btree])   
-  Returns a vector consisting of all contents in btree.
+  INEFFICIENT!! Returns a vector consisting of all contents in btree. 
+- (btree-count [this btree])
+  INEFFICIENT!! Returns the number of all contents in btree. 
+  Equivalent to (count (btree-dir this btree)).
 
+There are also functions in the _BTreePool_ protocol that allow to work with indices. 
+They assume that a function _address-count_ is passed to them which could be defined as follows:
+
+     (defn address-count [btree] (btree-count pool btree))
+
+Instead of the above definition though, _address-count_ should be implemented by extracting the count from the address directly.
+The functions working with indices are:
+- (btree-indexed-find [this btree address-count key])
+  Looks up the content for the given key in btree. 
+  Returns {:index index :content content} if content was found successfully at index.
+  Returns {:index index} if no such content exists but would be inserted at index.
+- (btree-range-retrieve [this btree address-count range-start range-end])
+  Returns a vector of the contents between index _range-start_ (inclusive) and index _range-end_ (exclusive).
+  
 The signature of _btree-pool_ is:
 
     (btree-pool

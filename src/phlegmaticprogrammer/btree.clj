@@ -13,6 +13,9 @@
 ;;       if this is a leaf, then this is a vector of Content objects
 ;;       if it is not a leaf, then this is a vector of addresses separated by Content objects  
 
+(defn- violation [s]
+  (throw (RuntimeException. s)))
+
 (defn- vec-concat [& items] (vec (apply concat items)))
 
 (defn- vec-replace [v i j coll] (vec-concat (subvec v 0 i) coll (subvec v j)))
@@ -21,10 +24,17 @@
   (btree-empty [this])
   (btree-insert [this btree x])
   (btree-delete [this btree key])
+  (btree-count [this btree])
   (btree-dir [this btree])
   (btree-find [this btree key])
-  )
-
+  (btree-indexed-find [this btree address-count key])
+  (btree-range-retrieve [this btree address-count range-start range-end])
+  (btree-fold [this btree f v])
+  (btree-flatfold [this btree f-content f-address v])
+  (btree-store-node [this])
+  (btree-load-node [this])
+  (btree-cmp [this]))
+  
 (defn btree-pool
   "Creates a BTreePool instance.
    param-t        minimum degree of B-tree, >= 2
@@ -238,7 +248,7 @@
                (if (not (btree-is-thin right-child))          
                  (btree-rotate-left-delete content child-index child right-child key)
                  (btree-merge-right-delete content child-index child right-child key)))    
-             (throw (RuntimeException. "Impossible, every child is supposed to have at least one sibling!"))))))))
+             (violation "Impossible, every child is supposed to have at least one sibling!")))))))
  
  (btree-delete-not-thin [btree key]
    (if (:leaf btree)
@@ -259,13 +269,6 @@
      (if (and (not (:leaf result)) (= (count (:content result)) 1))  
        ((:content result) 0)
        result-s)))
-
- (btree-dir- [btree]
-   (let [m-node (load-node btree)
-         f (fn [i x] (if (even? i) (btree-dir- x) [x]))]
-     (if (:leaf m-node)
-       (:content m-node)
-       (apply concat (map-indexed f (:content m-node))))))
  
  (btree-find- [btree key]
    (let [m-node (load-node btree)
@@ -277,7 +280,70 @@
              {f :found nf :not-found} r]
          (if f
            (content f)
-           (btree-find- (content (- nf 1)) key)))))) 
+           (btree-find- (content (- nf 1)) key))))))
+
+ (count-content [address-count content end-index]
+   (loop [index 0
+          count 0]
+     (if (>= index end-index)
+       count
+       (recur (+ index 1)
+              (+ count (if (odd? index)
+                         1
+                         (address-count (content index))))))))    
+ 
+ (btree-indexed-find- [btree address-count offset key]
+   (let [m-node (load-node btree)
+         content (:content m-node)]
+     (if (:leaf m-node)
+       (let [r (find-key-in-content 0 1 key content)
+             f (:found r)
+             nf (:not-found r)]
+         (if f
+           {:index (+ f offset) :content (content f)}
+           {:index (+ nf offset)}))
+       (let [r (find-key-in-content 1 2 key content)
+             {f :found nf :not-found} r]
+         (if f
+           {:content (content f) :index (+ offset (count-content address-count content f))} 
+           (btree-indexed-find- (content (- nf 1)) address-count
+                                (+ offset (count-content address-count content (- nf 1)))
+                                key))))))
+
+ (reduce-with-index [f v coll]
+   (let [g (fn [[u index] c] [(f u index c) (+ index 1)])]
+     (first (reduce g [v 0] coll))))
+ 
+ (btree-flatfold- [btree f-content f-address v]
+   (let [m-node (load-node btree)
+         content (:content m-node)]
+     (if (:leaf m-node)
+       (reduce f-content v content)
+       (reduce-with-index
+         (fn [v index elem]
+           (if (odd? index)
+             (f-content v elem)
+             (f-address v elem)))
+         v content))))
+
+ (btree-fold- [btree f v]
+   (let [f-address (fn [v address] (btree-fold- address f v))]
+     (btree-flatfold- btree f f-address v)))
+
+ (btree-range-retrieve- [btree address-count range-start range-end index collected]
+   (let [f-content (fn [[index collected] c]
+                     (if (and (>= index range-start) (< index range-end))
+                       [(+ index 1) (cons c collected)]
+                       [(+ index 1) collected]))
+         f-address (fn [[index collected] address]
+                     (if (>= index range-end)
+                       [index collected]
+                       (let [count (address-count address)]
+                         (if (< (- (+ index count) 1) range-start)
+                           [(+ index count) collected]
+                           (btree-range-retrieve- address address-count range-start range-end index collected)))))]
+     (btree-flatfold- btree f-content f-address [index collected])))
+                           
  ]
 (reify BTreePool
 
@@ -285,8 +351,17 @@
   (btree-insert [this btree x] (btree-insert- btree x))
   (btree-delete [this btree key] (btree-delete- btree key))
   (btree-find [this btree key] (btree-find- btree key))
-  (btree-dir [this btree] (btree-dir- btree)) 
-    
+  (btree-indexed-find [this btree address-count key] (btree-indexed-find- btree address-count 0 key))
+  (btree-range-retrieve [this btree address-count range-start range-end]
+    (apply vector (reverse (second (btree-range-retrieve- btree address-count range-start range-end 0 '())))))
+  (btree-fold [this btree f v] (btree-fold- btree f v))
+  (btree-flatfold [this btree f-content f-address v] (btree-flatfold- btree f-content f-address v))
+  (btree-count [this btree] (btree-fold- btree (fn [v c] (+ v 1)) 0))
+  (btree-dir [this btree] (apply vector (reverse (btree-fold- btree (fn [v c] (cons c v)) '()))))
+  (btree-store-node [this] store-node)
+  (btree-load-node [this] load-node)
+  (btree-cmp [this] param-cmp)
+
 )))
 
   
